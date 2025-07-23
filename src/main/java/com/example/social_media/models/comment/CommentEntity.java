@@ -33,38 +33,4 @@ public class CommentEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id")
     private UserEntity user;
-
-    // ...existing code...
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
-
-    public PostEntity getPost() {
-        return post;
-    }
-
-    public void setPost(PostEntity post) {
-        this.post = post;
-    }
-
-    public UserEntity getUser() {
-        return user;
-    }
-
-    public void setUser(UserEntity user) {
-        this.user = user;
-    }
 }

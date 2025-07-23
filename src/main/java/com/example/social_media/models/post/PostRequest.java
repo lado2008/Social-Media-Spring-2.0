@@ -13,6 +13,4 @@ public class PostRequest {
     @NotBlank(message = "Post text cannot be empty")
     @Size(min = 2, max = 512, message = "Post text must be 2-512 characters")
     private String text;
-
-    // ...existing code...
 }

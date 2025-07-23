@@ -17,6 +17,4 @@ public class CommentRequest {
 
     @NotNull(message = "Post ID cannot be null")
     private Long postId;
-
-    // ...existing code...
 }

@@ -28,6 +28,4 @@ public class UserRequest {
     @NotNull(message = "Date of birth cannot be null")
     @PastOrPresent(message = "Date of birth must not be in the future")
     private LocalDate dateOfBirth;
-
-    // ...existing code...
 }
