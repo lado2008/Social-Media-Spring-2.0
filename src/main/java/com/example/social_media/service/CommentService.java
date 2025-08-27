@@ -13,6 +13,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import com.example.social_media.security.SecurityUtil;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 
 @Service
 public class CommentService {
@@ -26,8 +29,13 @@ public class CommentService {
         this.userService = userService;
     }
 
-    public CommentResponse create(String username, CommentRequest request) {
+    public CommentResponse create(CommentRequest request) {
+        Authentication auth = SecurityUtil.getAuth();
+        String username = SecurityUtil.getCurrentUsername(auth);
         UserEntity user = userService.findByUsername(username);
+        if (!user.isActive()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is deactivated and cannot create comments");
+        }
         PostEntity post = postService.getPostEntityById(request.getPostId());
         CommentEntity entity = new CommentEntity();
         entity.setText(request.getText());
@@ -37,13 +45,25 @@ public class CommentService {
         return CommentMapper.mapEntityToResponse(saved);
     }
 
-    public void delete(String username, Long commentId) {
-        CommentEntity comment = getCommentByIdAndUsername(commentId, username);
+    public void delete(Long commentId) {
+        Authentication auth = SecurityUtil.getAuth();
+        CommentEntity comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found"));
+        if (!SecurityUtil.isAdmin(auth)
+                && !comment.getUser().getUsername().equals(SecurityUtil.getCurrentUsername(auth))) {
+            throw new AccessDeniedException("You are not allowed to delete this comment");
+        }
         commentRepository.delete(comment);
     }
 
-    public CommentResponse updateText(String username, Long commentId, String newText) {
-        CommentEntity comment = getCommentByIdAndUsername(commentId, username);
+    public CommentResponse updateText(Long commentId, String newText) {
+        Authentication auth = SecurityUtil.getAuth();
+        CommentEntity comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found"));
+        if (!SecurityUtil.isAdmin(auth)
+                && !comment.getUser().getUsername().equals(SecurityUtil.getCurrentUsername(auth))) {
+            throw new AccessDeniedException("You are not allowed to edit this comment");
+        }
         comment.setText(newText);
         CommentEntity saved = commentRepository.save(comment);
         return CommentMapper.mapEntityToResponse(saved);
@@ -52,15 +72,6 @@ public class CommentService {
     public Page<CommentResponse> getAllByPost(Long postId, int page, int size) {
         return commentRepository.findAllByPost_Id(postId, PageRequest.of(page, size, Sort.Direction.DESC, "id"))
                 .map(CommentMapper::mapEntityToResponse);
-    }
-
-    private CommentEntity getCommentByIdAndUsername(Long commentId, String username) {
-        CommentEntity comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found"));
-        if (!comment.getUser().getUsername().equals(username)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not the owner of this comment");
-        }
-        return comment;
     }
 
     public CommentEntity getCommentEntityById(Long commentId) {

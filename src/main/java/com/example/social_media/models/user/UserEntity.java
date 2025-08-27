@@ -4,6 +4,8 @@ package com.example.social_media.models.user;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
+import java.util.Set;
+import java.util.HashSet;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -40,4 +42,16 @@ public class UserEntity {
     @PastOrPresent(message = "Date of birth must not be in the future")
     @Column(name = "date_of_birth", nullable = false)
     private LocalDate dateOfBirth;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<RoleEntity> roles = new HashSet<>();
+
+    @Column(name = "active", nullable = false)
+    private boolean active = true;
+
+    @NotBlank(message = "Password cannot be empty")
+    @Size(min = 6, max = 100, message = "Password must be 6-100 characters")
+    @Column(name = "password", nullable = false)
+    private String password;
 }

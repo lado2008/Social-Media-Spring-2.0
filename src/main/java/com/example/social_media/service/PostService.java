@@ -5,6 +5,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import com.example.social_media.security.SecurityUtil;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 
 import com.example.social_media.mappers.PostMapper;
 import com.example.social_media.models.post.PostEntity;
@@ -23,21 +26,38 @@ public class PostService {
         this.userService = userService;
     }
 
-    public PostResponse create(String username, PostRequest request) {
+    public PostResponse create(PostRequest request) {
+        Authentication auth = SecurityUtil.getAuth();
+        String username = SecurityUtil.getCurrentUsername(auth);
         UserEntity user = userService.findByUsername(username);
+        if (!user.isActive()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is deactivated and cannot create posts");
+        }
         PostEntity entity = PostMapper.mapRequestToEntity(request);
         entity.setUser(user);
         PostEntity saved = postRepository.save(entity);
         return PostMapper.mapEntityToResponse(saved);
     }
 
-    public void delete(String username, Long postId) {
-        PostEntity post = getPostByIdAndUsername(postId, username);
+    public void delete(Long postId) {
+        Authentication auth = SecurityUtil.getAuth();
+        PostEntity post = postRepository.findById(postId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+        if (!SecurityUtil.isAdmin(auth)
+                && !post.getUser().getUsername().equals(SecurityUtil.getCurrentUsername(auth))) {
+            throw new AccessDeniedException("You are not allowed to delete this post");
+        }
         postRepository.delete(post);
     }
 
-    public PostResponse updateText(String username, Long postId, String newText) {
-        PostEntity post = getPostByIdAndUsername(postId, username);
+    public PostResponse updateText(Long postId, String newText) {
+        Authentication auth = SecurityUtil.getAuth();
+        PostEntity post = postRepository.findById(postId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+        if (!SecurityUtil.isAdmin(auth)
+                && !post.getUser().getUsername().equals(SecurityUtil.getCurrentUsername(auth))) {
+            throw new AccessDeniedException("You are not allowed to edit this post");
+        }
         post.setText(newText);
         PostEntity saved = postRepository.save(post);
         return PostMapper.mapEntityToResponse(saved);
@@ -61,14 +81,5 @@ public class PostService {
     public PostEntity getPostEntityById(Long postId) {
         return postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
-    }
-
-    private PostEntity getPostByIdAndUsername(Long postId, String username) {
-        PostEntity post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
-        if (!post.getUser().getUsername().equals(username)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not the owner of this post");
-        }
-        return post;
     }
 }

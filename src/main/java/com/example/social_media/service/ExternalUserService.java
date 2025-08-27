@@ -37,7 +37,7 @@ public class ExternalUserService {
                     } else if (local.length() > 16) {
                         username = local.substring(0, 16);
                     } else {
-                        username = "user" + ((int)(Math.random()*9000)+1000);
+                        username = "user" + ((int) (Math.random() * 9000) + 1000);
                     }
                     if (!userRepository.existsByUsername(username)) {
                         UserEntity entity = new UserEntity();
@@ -65,17 +65,17 @@ public class ExternalUserService {
                     String local = user.getEmail().split("@")[0];
                     local = local.replaceAll("[^A-Za-z0-9]", "");
                     String username;
-                    
+
                     if (local.length() >= 4 && local.length() <= 16) {
                         username = local;
                     } else if (local.length() > 16) {
                         username = local.substring(0, 16);
                     } else {
-                        username = "user" + ((int)(Math.random()*9000)+1000);
+                        username = "user" + ((int) (Math.random() * 9000) + 1000);
                     }
                     userRepository.findAll().stream()
-                        .filter(u -> u.getUsername().equals(username))
-                        .forEach(userRepository::delete);
+                            .filter(u -> u.getUsername().equals(username))
+                            .forEach(userRepository::delete);
                 });
             }
         } catch (Exception e) {

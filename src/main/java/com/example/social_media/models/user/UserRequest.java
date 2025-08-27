@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserRequest {
+
     @NotBlank(message = "Username cannot be empty")
     @Size(min = 4, max = 16, message = "Username must be 4-16 characters")
     @Pattern(regexp = "^[A-Za-z0-9]+$", message = "Username must contain only Latin letters or numbers")
@@ -28,4 +29,11 @@ public class UserRequest {
     @NotNull(message = "Date of birth cannot be null")
     @PastOrPresent(message = "Date of birth must not be in the future")
     private LocalDate dateOfBirth;
+
+    @NotBlank(message = "Password cannot be empty")
+    @Size(min = 6, max = 100, message = "Password must be 6-100 characters")
+    private String password;
+
+    @NotBlank(message = "Role cannot be empty")
+    private String role;
 }

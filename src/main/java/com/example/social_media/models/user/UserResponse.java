@@ -15,4 +15,3 @@ public class UserResponse {
     private String lastName;
     private LocalDate dateOfBirth;
 }
-   
