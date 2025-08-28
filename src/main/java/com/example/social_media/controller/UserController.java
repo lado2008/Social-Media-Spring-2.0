@@ -43,4 +43,11 @@ public class UserController {
         userService.deactivateUser(username);
         return ResponseEntity.ok().build();
     }
+
+    @PatchMapping("/activate/{username}")
+    @PreAuthorize("hasAuthority('admin')")
+    public ResponseEntity<?> activateUser(@PathVariable String username) {
+        userService.activateUser(username);
+        return ResponseEntity.ok().build();
+    }
 }

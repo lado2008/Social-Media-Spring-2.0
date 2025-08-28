@@ -34,7 +34,8 @@ public class CommentService {
         String username = SecurityUtil.getCurrentUsername(auth);
         UserEntity user = userService.findByUsername(username);
         if (!user.isActive()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is deactivated and cannot create comments");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "User is deactivated and cannot perform this action");
         }
         PostEntity post = postService.getPostEntityById(request.getPostId());
         CommentEntity entity = new CommentEntity();
@@ -47,10 +48,16 @@ public class CommentService {
 
     public void delete(Long commentId) {
         Authentication auth = SecurityUtil.getAuth();
+        String username = SecurityUtil.getCurrentUsername(auth);
+        UserEntity user = userService.findByUsername(username);
+        if (!user.isActive()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "User is deactivated and cannot perform this action");
+        }
         CommentEntity comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found"));
         if (!SecurityUtil.isAdmin(auth)
-                && !comment.getUser().getUsername().equals(SecurityUtil.getCurrentUsername(auth))) {
+                && !comment.getUser().getUsername().equals(username)) {
             throw new AccessDeniedException("You are not allowed to delete this comment");
         }
         commentRepository.delete(comment);
@@ -58,10 +65,16 @@ public class CommentService {
 
     public CommentResponse updateText(Long commentId, String newText) {
         Authentication auth = SecurityUtil.getAuth();
+        String username = SecurityUtil.getCurrentUsername(auth);
+        UserEntity user = userService.findByUsername(username);
+        if (!user.isActive()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "User is deactivated and cannot perform this action");
+        }
         CommentEntity comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found"));
         if (!SecurityUtil.isAdmin(auth)
-                && !comment.getUser().getUsername().equals(SecurityUtil.getCurrentUsername(auth))) {
+                && !comment.getUser().getUsername().equals(username)) {
             throw new AccessDeniedException("You are not allowed to edit this comment");
         }
         comment.setText(newText);
@@ -70,6 +83,12 @@ public class CommentService {
     }
 
     public Page<CommentResponse> getAllByPost(Long postId, int page, int size) {
+        Authentication auth = SecurityUtil.getAuth();
+        String username = SecurityUtil.getCurrentUsername(auth);
+        UserEntity user = userService.findByUsername(username);
+        if (!user.isActive()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is deactivated and cannot view comments");
+        }
         return commentRepository.findAllByPost_Id(postId, PageRequest.of(page, size, Sort.Direction.DESC, "id"))
                 .map(CommentMapper::mapEntityToResponse);
     }

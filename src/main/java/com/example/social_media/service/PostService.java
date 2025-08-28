@@ -31,7 +31,8 @@ public class PostService {
         String username = SecurityUtil.getCurrentUsername(auth);
         UserEntity user = userService.findByUsername(username);
         if (!user.isActive()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is deactivated and cannot create posts");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "User is deactivated and cannot perform this action");
         }
         PostEntity entity = PostMapper.mapRequestToEntity(request);
         entity.setUser(user);
@@ -41,10 +42,16 @@ public class PostService {
 
     public void delete(Long postId) {
         Authentication auth = SecurityUtil.getAuth();
+        String username = SecurityUtil.getCurrentUsername(auth);
+        UserEntity user = userService.findByUsername(username);
+        if (!user.isActive()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "User is deactivated and cannot perform this action");
+        }
         PostEntity post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
         if (!SecurityUtil.isAdmin(auth)
-                && !post.getUser().getUsername().equals(SecurityUtil.getCurrentUsername(auth))) {
+                && !post.getUser().getUsername().equals(username)) {
             throw new AccessDeniedException("You are not allowed to delete this post");
         }
         postRepository.delete(post);
@@ -52,10 +59,16 @@ public class PostService {
 
     public PostResponse updateText(Long postId, String newText) {
         Authentication auth = SecurityUtil.getAuth();
+        String username = SecurityUtil.getCurrentUsername(auth);
+        UserEntity user = userService.findByUsername(username);
+        if (!user.isActive()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "User is deactivated and cannot perform this action");
+        }
         PostEntity post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
         if (!SecurityUtil.isAdmin(auth)
-                && !post.getUser().getUsername().equals(SecurityUtil.getCurrentUsername(auth))) {
+                && !post.getUser().getUsername().equals(username)) {
             throw new AccessDeniedException("You are not allowed to edit this post");
         }
         post.setText(newText);
@@ -64,15 +77,33 @@ public class PostService {
     }
 
     public Page<PostResponse> getAll(int page, int size) {
+        Authentication auth = SecurityUtil.getAuth();
+        String username = SecurityUtil.getCurrentUsername(auth);
+        UserEntity user = userService.findByUsername(username);
+        if (!user.isActive()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is deactivated and cannot view posts");
+        }
         return postRepository.findAll(PageRequest.of(page, size)).map(PostMapper::mapEntityToResponse);
     }
 
     public Page<PostResponse> getAllByUser(String username, int page, int size) {
+        Authentication auth = SecurityUtil.getAuth();
+        String currentUsername = SecurityUtil.getCurrentUsername(auth);
+        UserEntity user = userService.findByUsername(currentUsername);
+        if (!user.isActive()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is deactivated and cannot view posts");
+        }
         return postRepository.findAllByUser_Username(username, PageRequest.of(page, size))
                 .map(PostMapper::mapEntityToResponse);
     }
 
     public PostResponse getById(Long postId) {
+        Authentication auth = SecurityUtil.getAuth();
+        String username = SecurityUtil.getCurrentUsername(auth);
+        UserEntity user = userService.findByUsername(username);
+        if (!user.isActive()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is deactivated and cannot view posts");
+        }
         PostEntity post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
         return PostMapper.mapEntityToResponse(post);

@@ -117,4 +117,14 @@ public class UserService {
         user.setActive(false);
         userRepository.save(user);
     }
+
+    public void activateUser(String username) {
+        Authentication auth = com.example.social_media.security.SecurityUtil.getAuth();
+        if (!com.example.social_media.security.SecurityUtil.isAdmin(auth)) {
+            throw new org.springframework.security.access.AccessDeniedException("Only admins can activate users");
+        }
+        UserEntity user = findByUsername(username);
+        user.setActive(true);
+        userRepository.save(user);
+    }
 }
